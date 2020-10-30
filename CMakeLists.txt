@@ -8,5 +8,4 @@ add_executable(untitled main.c parametrs.h calculus.h calculus.c)
 include_directories(lib)
 find_library(LIBTOMMATH libtommath.a lib)
 
-
 target_link_libraries(${PROJECT_NAME} PUBLIC ${LIBTOMMATH})
