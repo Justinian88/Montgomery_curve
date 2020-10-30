@@ -3,7 +3,7 @@ project(untitled C)
 
 set(CMAKE_C_STANDARD 11)
 
-add_executable(untitled main.c parametrs.h calculus.h calculus.c)
+add_executable(untitled main.c parametrs.h calculus.h calc.c)
 
 include_directories(lib)
 find_library(LIBTOMMATH libtommath.a lib)
