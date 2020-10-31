@@ -1,5 +1,5 @@
 #include "tommath.h"
-#include "pointCurveStructures.h"
+#include "calculus.h"
 #include "parametrs.h"
 
 /* Point */
@@ -74,6 +74,12 @@ void default_point(struct m_point *point, const struct m_curve *curve){
     res = mp_copy(&curve->X, &point->X);
     res = mp_copy(&curve->Y, &point->Y);
     res = mp_copy(&curve->Z, &point->Z);
+}
+void point_negative(struct m_point *point, struct m_point *point2){
+    int res;
+    res = mp_neg(&point2->X, &point->X);
+    res = mp_copy(&point2->Y, &point->Y);
+    res = mp_copy(&point2->Z, &point->Z);
 }
 
 /* View */
@@ -189,4 +195,66 @@ void point_on_curve(const struct m_curve *curve, const struct m_point *point){
         printf("Point doesn't belong to curve\n");
     }
     mp_clear_multi(&two, &three, &V1, &V2, &V3, NULL);
+}
+void binaryMethod(struct m_point *result, const struct m_point *point, const struct m_curve *curve, const mp_int *k) { // Лекции, слайд 53
+    int res;
+    struct m_point Q_point;
+    m_point_init(&Q_point);
+    m_point_custom(&Q_point, "0", "1", "0");
+    int bits = mp_count_bits(k);
+
+    for (int i = bits - 1; i >= 0; --i) {
+        xDBL(&Q_point, curve);
+        if (mp_get_bit(k, i))
+            xADD(&Q_point, &Q_point, point, curve);
+    }
+    res = mp_copy(&Q_point.X, &result->X);
+    res = mp_copy(&Q_point.Y, &result->Y);
+    res = mp_copy(&Q_point.Z, &result->Z);
+    m_point_clear(&Q_point);
+}
+
+/* Tests */
+_Bool point_cmp(struct m_point *temp1, struct m_point *temp2){
+    return  (mp_cmp(&temp1->X, &temp2->X) == MP_EQ) && (mp_cmp(&temp1->Z, &temp2->Z) == MP_EQ) ;
+}
+void distributivity(struct m_point *point, const struct m_curve *curve){
+    int res;
+    mp_int k1, k2, k3;
+    char stroka[50] = "";
+    res = mp_init_multi(&k1, &k2, &k3, NULL);
+
+    res = mp_rand(&k1, 5);
+    res = mp_to_radix(&k1, stroka, 50, NULL, 10);
+    printf("random k1 = %s", stroka);
+
+    res = mp_rand(&k2, 5);
+    res = mp_to_radix(&k2, stroka, 50, NULL, 10);
+    printf("\nrandom k2 = %s", stroka);
+
+    res = mp_add(&k1, &k2, &k3);
+    res = mp_to_radix(&k3, stroka, 50, NULL, 10);
+    printf("\nk1 + k2   = %s", stroka);
+    printf("\nCondition: k1*P + k2*P = (k1+k2)*P\n");
+
+    struct m_point temp1, temp2, temp3;
+    m_point_init(&temp1);
+    m_point_init(&temp2);
+    m_point_init(&temp3);
+
+    binaryMethod(&temp1, point, curve, &k1); // temp1 = k1*P
+    binaryMethod(&temp2, point, curve, &k2); // temp2 = k2*P
+    xADD(&temp1, &temp2, &temp1, curve);     // temp1 = k1*P + k2*P
+    binaryMethod(&temp3, point, curve, &k3); // temp3 = (k1+k2)*P
+    if (point_cmp(&temp1, &temp3)) {
+       printf("Test passed\n");
+    }
+    else
+    {
+        printf("Test not passed\n");
+    }
+    mp_clear_multi(&k1, &k2, &k3, NULL);
+    m_point_clear(&temp1);
+    m_point_clear(&temp2);
+    m_point_clear(&temp3);
 }

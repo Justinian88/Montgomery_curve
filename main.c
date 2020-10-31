@@ -1,13 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "tommath.h"
-#include "pointCurveStructures.h"
+#include "calculus.h"
 
 int main()
 {
-    struct m_point point;
+    struct m_point point, neutral, pp, neg;
     m_point_init(&point);
-    //m_point_custom(&neutral, "1", "0", "1");
+    m_point_init(&pp);
+    m_point_init(&neg);
+    m_point_init(&neutral);
     struct m_curve curve;
     m_curve_init(&curve);
     m_curve_create(&curve);
@@ -22,47 +24,56 @@ int main()
     /* Test 2 */
     printf("\nTest №2\n");
     printf("Condition: q*P = 0\n");
-    /*
-    printf("Test passed\n");
-    */
+    m_point_custom(&neutral, "0", "1", "0");
+    binaryMethod(&pp, &point, &curve, &curve.q);
+    if (point_cmp(&pp, &neutral)) {
+            printf("Test passed\n");
+        }
+        else{
+            printf("Test not passed\n");
+        }
 
-    /* Test 3.1 */
+    /* Test 3 */
+
     printf("\nTest №3.1\n");
     printf("Condition: (q+1)*P = P\n");
-    /*
-    printf("Test passed\n");
-    */
-
-    /* Test 3.2 */
+    int res;
+    mp_int temp;
+    res = mp_init(&temp);
+    mp_set_i32(&temp, 1);
+    res = mp_add(&temp, &curve.q, &temp);
+    binaryMethod(&pp, &point, &curve, &temp); //point = (q+1) * P
+    if (point_cmp(&pp, &point)) {
+        printf("Test passed\n");
+    }
+    else{
+        printf("Test not passed\n");
+    }
     printf("\nTest №3.2\n");
     printf("Condition: (q-1)*P = -P\n");
+
+    point_negative(&neg, &point); // -P
+    mp_set_i32(&temp, 1);
+    res = mp_sub(&curve.q, &temp, &temp);
+    binaryMethod(&pp, &point, &curve, &temp); //point = (q-1) * P
+    if (point_cmp(&pp, &neg)) {
+        printf("Test passed\n");
+    }
+    else{
+        printf("Test not passed\n");
+    }
     /*
     printf("Test passed\n");
     */
 
-
+    /* Test 4 */
     printf("\nTest №4\n");
-    int res;
-    mp_int k1, k2, k3;
-    char stroka[50] = "";
-    res = mp_init_multi(&k1, &k2, &k3, NULL);
+    distributivity(&point, &curve);
 
-    res = mp_rand(&k1, 5);
-    res = mp_to_radix(&k1, stroka, 50, NULL, 10);
-    printf("random k1 = %s", stroka);
-
-    res = mp_rand(&k2, 5);
-    res = mp_to_radix(&k2, stroka, 50, NULL, 10);
-    printf("\nrandom k2 = %s", stroka);
-
-    res = mp_add(&k1, &k2, &k3);
-    res = mp_to_radix(&k3, stroka, 50, NULL, 10);
-    printf("\nk1 + k2   = %s", stroka);
-    printf("\nCondition: k1*P + k2*P = (k1+k2)*P\n");
-
-    /*
-    printf("Test passed\n\n");
-    */
+    /* Clear */
+    m_point_clear(&point);
+    m_curve_clear(&curve);
+    /* THE END */
 }
 
 
